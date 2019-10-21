@@ -29,7 +29,7 @@ Mario - игра, в которой предстоит управлять гер
 
 В окне с игрой мы видим текущие очки, время за которое игрок должен пройти уровень, наименование уровня, количество жизней,  игровое поле.
 
-![GameScreen](https://github.com/PaulChukhonski/Mario/blob/master/Images/game_screen.png)
+![GameScreen](https://github.com/PaulChukhonski/Mario/blob/master/Images/game_screen_update.png)
 
 - Меню настроек
 
