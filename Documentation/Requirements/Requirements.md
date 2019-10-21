@@ -29,13 +29,19 @@ Mario - игра, в которой предстоит управлять гер
 
 В окне с игрой мы видим текущие очки, время за которое игрок должен пройти уровень, наименование уровня, количество жизней,  игровое поле.
 
+![GameScreen](https://github.com/PaulChukhonski/Mario/blob/master/Images/game_screen.png)
+
 - Меню настроек
 
 В окне с настройками вы модете изменить скорость персонажа, уменьшить/увеличить звук.
 
+![OptionsScreen](https://github.com/PaulChukhonski/Mario/blob/master/Images/options_screen.png)
+
 - Меню с правилами
 
 В этом окне мы можем ознакомиться с правилами игры.
+
+![RulesScreen](https://github.com/PaulChukhonski/Mario/blob/master/Images/rules_screen.png)
 
 #### 2.3. Характеристики пользователей <a name="2.3"></a>
 - Целевая аудитория
