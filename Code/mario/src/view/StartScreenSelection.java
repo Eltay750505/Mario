@@ -3,7 +3,6 @@ package view;
 public enum StartScreenSelection {
     START_GAME(0),
     VIEW_HELP(1);
-    //VIEW_ABOUT(2);
 
     private final int lineNumber;
     StartScreenSelection(int lineNumber){ this.lineNumber = lineNumber; }
@@ -13,8 +12,6 @@ public enum StartScreenSelection {
             return START_GAME;
         else if(number == 1)
             return VIEW_HELP;
-        //else if(number == 2)
-            //return VIEW_ABOUT;
         else return null;
     }
 

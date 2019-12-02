@@ -1,18 +1,22 @@
 package manager;
 
+import model.hero.Mario;
 import view.ImageLoader;
 import view.StartScreenSelection;
 import view.UIManager;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class GameEngine implements Runnable {
 
     private final static int WIDTH = 1268, HEIGHT = 708;
 
+    private MapManager mapManager;
     private UIManager uiManager;
     private GameStatus gameStatus;
     private boolean isRunning;
+    private Camera camera;
     private ImageLoader imageLoader;
     private Thread thread;
     private StartScreenSelection startScreenSelection = StartScreenSelection.START_GAME;
@@ -26,7 +30,9 @@ public class GameEngine implements Runnable {
         imageLoader = new ImageLoader();
         InputManager inputManager = new InputManager(this);
         gameStatus = GameStatus.START_SCREEN;
+        camera = new Camera();
         uiManager = new UIManager(this, WIDTH, HEIGHT);
+        mapManager = new MapManager();
 
         JFrame frame = new JFrame("Super Mario Bros.");
         frame.add(uiManager);
@@ -51,19 +57,40 @@ public class GameEngine implements Runnable {
     }
 
     private void reset(){
+        resetCamera();
         setGameStatus(GameStatus.START_SCREEN);
+    }
+
+    public void resetCamera(){
+        camera = new Camera();
     }
 
     public void selectMapViaMouse() {
         String path = uiManager.selectMapViaMouse(uiManager.getMousePosition());
+        if (path != null) {
+            createMap(path);
+        }
     }
 
     public void selectMapViaKeyboard(){
         String path = uiManager.selectMapViaKeyboard(selectedMap);
+        if (path != null) {
+            createMap(path);
+        }
     }
 
     public void changeSelectedMap(boolean up){
         selectedMap = uiManager.changeSelectedMap(selectedMap, up);
+    }
+
+    private void createMap(String path) {
+        boolean loaded = mapManager.createMap(imageLoader, path);
+        if(loaded){
+            setGameStatus(GameStatus.RUNNING);
+        }
+
+        else
+            setGameStatus(GameStatus.START_SCREEN);
     }
 
     @Override
@@ -81,7 +108,7 @@ public class GameEngine implements Runnable {
             lastTime = now;
             while (delta >= 1) {
                 if (gameStatus == GameStatus.RUNNING) {
-                    //gameLoop();
+                    gameLoop();
                 }
                 delta--;
             }
@@ -93,13 +120,50 @@ public class GameEngine implements Runnable {
 
             if (System.currentTimeMillis() - timer > 1000) {
                 timer += 1000;
-                //mapManager.updateTime();
+                mapManager.updateTime();
             }
         }
     }
 
     private void render() {
         uiManager.repaint();
+    }
+
+    private void gameLoop() {
+        updateLocations();
+        checkCollisions();
+        updateCamera();
+
+        if (isGameOver()) {
+            setGameStatus(GameStatus.GAME_OVER);
+        }
+
+        int missionPassed = passMission();
+        if(missionPassed > -1){
+            mapManager.acquirePoints(missionPassed);
+            //setGameStatus(GameStatus.MISSION_PASSED);
+        } else if(mapManager.endLevel())
+            setGameStatus(GameStatus.MISSION_PASSED);
+    }
+
+    private void updateCamera() {
+        Mario mario = mapManager.getMario();
+        double marioVelocityX = mario.getVelX();
+        double shiftAmount = 0;
+
+        if (marioVelocityX > 0 && mario.getX() - 600 > camera.getX()) {
+            shiftAmount = marioVelocityX;
+        }
+
+        camera.moveCam(shiftAmount, 0);
+    }
+
+    private void updateLocations() {
+        mapManager.updateLocations();
+    }
+
+    private void checkCollisions() {
+        mapManager.checkCollisions(this);
     }
 
     public void receiveInput(ButtonAction input) {
@@ -125,6 +189,25 @@ public class GameEngine implements Runnable {
             else if(input == ButtonAction.GO_DOWN){
                 changeSelectedMap(false);
             }
+        } else if (gameStatus == GameStatus.RUNNING) {
+            Mario mario = mapManager.getMario();
+            if (input == ButtonAction.JUMP) {
+                mario.jump(this);
+            } else if (input == ButtonAction.M_RIGHT) {
+                mario.move(true, camera);
+            } else if (input == ButtonAction.M_LEFT) {
+                mario.move(false, camera);
+            } else if (input == ButtonAction.ACTION_COMPLETED) {
+                mario.setVelX(0);
+            } else if (input == ButtonAction.FIRE) {
+                mapManager.fire(this);
+            } else if (input == ButtonAction.PAUSE_RESUME) {
+                pauseGame();
+            }
+        } else if (gameStatus == GameStatus.PAUSED) {
+            if (input == ButtonAction.PAUSE_RESUME) {
+                pauseGame();
+            }
         } else if(gameStatus == GameStatus.GAME_OVER && input == ButtonAction.GO_TO_START_SCREEN){
             reset();
         } else if(gameStatus == GameStatus.MISSION_PASSED && input == ButtonAction.GO_TO_START_SCREEN){
@@ -146,6 +229,24 @@ public class GameEngine implements Runnable {
         }
     }
 
+    private void pauseGame() {
+        if (gameStatus == GameStatus.RUNNING) {
+            setGameStatus(GameStatus.PAUSED);
+        } else if (gameStatus == GameStatus.PAUSED) {
+            setGameStatus(GameStatus.RUNNING);
+        }
+    }
+
+    public void shakeCamera(){
+        camera.shakeCamera();
+    }
+
+    private boolean isGameOver() {
+        if(gameStatus == GameStatus.RUNNING)
+            return mapManager.isGameOver();
+        return false;
+    }
+
     public ImageLoader getImageLoader() {
         return imageLoader;
     }
@@ -162,12 +263,43 @@ public class GameEngine implements Runnable {
         this.gameStatus = gameStatus;
     }
 
+    public int getScore() {
+        return mapManager.getScore();
+    }
+
+    public int getRemainingLives() {
+        return mapManager.getRemainingLives();
+    }
+
+    public int getCoins() {
+        return mapManager.getCoins();
+    }
+
     public int getSelectedMap() {
         return selectedMap;
+    }
+
+    public void drawMap(Graphics2D g2) {
+        mapManager.drawMap(g2);
+    }
+
+    public Point getCameraLocation() {
+        return new Point((int)camera.getX(), (int)camera.getY());
+    }
+
+    private int passMission(){
+        return mapManager.passMission();
+    }
+
+    public MapManager getMapManager() {
+        return mapManager;
     }
 
     public static void main(String... args) {
         new GameEngine();
     }
 
+    public int getRemainingTime() {
+        return mapManager.getRemainingTime();
+    }
 }

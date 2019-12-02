@@ -13,4 +13,3 @@ public enum ButtonAction {
     GO_TO_START_SCREEN,
     NO_ACTION
 }
-
